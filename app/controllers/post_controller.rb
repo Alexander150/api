@@ -4,7 +4,9 @@ require 'uri'
 
 class PostController < ApplicationController
 
-  def index
+  after_save :new
+
+  def new
   
 	app_id = '6907700'
 
@@ -14,9 +16,9 @@ class PostController < ApplicationController
 	group_id = '-179963046'
 
 	last_post = Post.last
-	get_posts = URI('https://api.vk.com/method/wall.post?v=5.92&access_token=' + access_user + '&owner_id=' + group_id + '&from_group=0&signed=1&lat=' + last_post.lat + '&long=' + last_post.long + '&attachments=doc' + last_post.file + ',' + last_post.href)
+	get_posts = URI('https://api.vk.com/method/wall.post?v=5.92&access_token=' + access_user + '&owner_id=' + group_id + '&from_group=0&signed=1&lat=' + last_post.lat + '&long=' + last_post.long + '&message=' + last_post.title)
 	@ans = JSON.parse(Net::HTTP.get(get_posts))
-	
+
   end
 
 end
