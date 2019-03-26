@@ -12,7 +12,7 @@ upload_url = json_parameters["response"]["upload_url"] # получаю upload_u
 # hash_string = get_json_upload_url["hash"].to_s # получаю hash в виде строки
 
 # photo = "https://images1.popmeh.ru/upload/img_cache/9e6/9e663df2539446f6c910e19e382dd38f_ce_1838x980x80x258_cropped_800x427.jpg"
-photo = '123.jpg'
+photo = 'http://151.248.113.245/123.jpg'
 uri = URI(upload_url)
 
 response = Net::HTTP.start uri.host, uri.port, :use_ssl => (uri.scheme == 'https') do |connection|
