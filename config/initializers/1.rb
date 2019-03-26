@@ -18,7 +18,7 @@ uri = URI(upload_url)
 response = Net::HTTP.start uri.host, uri.port, :use_ssl => (uri.scheme == 'https') do |connection|
       request = Net::HTTP::Post.new uri
       form_data = [
-          ['photo', photo]
+          ['file', photo]
       ]
       request.set_form form_data, 'multipart/form-data'
       connection.request request
