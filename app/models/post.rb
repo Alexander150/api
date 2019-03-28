@@ -7,22 +7,50 @@ class Post < ApplicationRecord
 	after_save :new_post
 
 	def new_post
-	    
 		post = Post.last
+		post.publish
+		
+	end
 
-		app_id = post.app_id
-		access_token = '1c01df7bcab1b79823f351984b776d9f4c923572823461c881553d3a56b874d1d094e72c90b3f15571f05'
-		group_id = post.group_id
+	def publish
+		app_id = self.app_id
+		# access_token  = '1c01df7bcab1b79823f351984b776d9f4c923572823461c881553d3a56b874d1d094e72c90b3f15571f05'
+		access_token = 'a9223c03ce7b3b00e083a86b20abb5fe3b7f11fbcbe39232efd8f822b6d3f77f57dbd837dca8cc89a6cec'
+
+		group_id = self.group_id
+			begin
+				main_body = 'https://api.vk.com/method/wall.post?v=5.92&access_token=' + access_token + '&from_group=0&signed=1'
+				group_id_body = '&owner_id=-' + group_id # В поле owner_id вставляется id группы
+				message_body = '&message=' + self.content
+				check_token = main_body + group_id_body + message_body
+
+				wall_post = URI(main_body + URI.encode(check_token))
+				ans = JSON.parse(Net::HTTP.get(wall_post))
+
+				post_id = ans["response"]["post_id"]
+
+				main_body = 'https://api.vk.com/method/wall.delete?v=5.92&access_token=' + access_token + '&from_group=0&signed=1'
+				group_id_body = '&owner_id=-' + group_id # В поле owner_id вставляется id группы
+				post_id_body = '&post_id=' + post_id.to_s
+				check_token = group_id_body + post_id_body
+
+				wall_delete = URI(main_body + URI.encode(check_token))
+				ans = JSON.parse(Net::HTTP.get(wall_delete))
+
+			rescue => e
+				p "Если Вы выложили менее 50 постов, то токен не валиден. Для получения токена перейдите по ссылке => https://oauth.vk.com/authorize?client_id=" + app_id + "&display=page&scope=friends&response_type=token&v=5.92&state=123456&scope=1073737727 и возьмите все что находится после 'access_token=' и до '&expires_in'. Скопированный текст необходимо вставить в переменную access_token (строка 18, вместо текста в кавычках ('#сюда#')"
+				return 
+			end
 
 		main_body = 'https://api.vk.com/method/photos.getWallUploadServer?v=5.92&access_token=' + access_token
 		group_id_body = '&group_id=' + group_id
 		getWallUploadServer_body = main_body + group_id_body
 
-		getWallUploadServer = URI(get_photo_url_body)  # Получаю данные для загрузки фото
+		getWallUploadServer = URI(getWallUploadServer_body)  # Получаю данные для загрузки фото
 		json_parameters = JSON.parse(Net::HTTP.get(getWallUploadServer)) # В json их
 		
 		uri = URI(json_parameters["response"]["upload_url"])
-		photo_from_db = post.photos
+		photo_from_db = self.photos
 		photos_source = photo_from_db.split(',')
 		photo_body = ''
 
@@ -61,18 +89,15 @@ class Post < ApplicationRecord
 				
 		main_body = 'https://api.vk.com/method/wall.post?v=5.92&access_token=' + access_token + '&from_group=0&signed=1'
 		group_id_body = '&owner_id=-' + group_id # В поле owner_id вставляется id группы
-		lat_long_body = '&lat=' + post.lat + '&long=' + post.long
-		if post.content.to_s.empty?
-			wall_post_body = main_body + group_id_body + lat_long_body + '&attachment=' + photo_body
+		lat_long_body = '&lat=' + self.lat + '&long=' + self.long
+		#Ксли контент не пустой, то грузить
+		if self.content.to_s.empty?
+			wall_post_body =  group_id_body + lat_long_body + '&attachment=' + photo_body
 		else
-			message_body = '&message=' + post.content
-			wall_post_body = main_body + group_id_body + lat_long_body + message_body + '&attachment=' + photo_body
+			message_body = '&message=' + self.content
+			wall_post_body =  group_id_body + lat_long_body + message_body + '&attachment=' + photo_body
 		end
-		wall_post = URI(wall_post_body)
-		ans = JSON.parse(Net::HTTP.get(wall_post))
-	end
-
-	def publish
-		
+		wall_post = URI(main_body + URI.encode(wall_post_body))
+		p ans = JSON.parse(Net::HTTP.get(wall_post))
 	end
 end
